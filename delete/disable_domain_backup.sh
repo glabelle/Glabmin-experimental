@@ -5,9 +5,10 @@ source $(dirname $0)/../glabmin.conf
 source $SCRIPTSDIR/glabmin_shared/common.sh
 
 #petite aide du script. Les options -h et -v sont systèmatiques ...
-DESCRIPTION="ajouter un service de backup d'un domaine"
+DESCRIPTION="supprimer le backup d'un domaine"
 USAGE="(-d|--domain) nom_du_domaine [options]"
 OPTIONS=""
+
 
 PARAMS=`getopt -o d:,h,v -l domain:,help,version -- "$@"`
 [ $? != 0 ]
@@ -34,16 +35,25 @@ done
 
 
 #argument vs system ckeckings :
-[ -z "`query "select name from domains where name='$opt_domain_val';"`" ] && error "Domain $opt_domail_val is unknown"
-[ -n "`query "select domain from backup_domains where domain='$opt_domain_val';"`" ] && error "Service backup for domain $opt_domain_val already present"
+[ -z "`query "select name from domains where name='$opt_domain_val';"`" ] && error "Domain $opt_domain_val is unknown"
+[ -z "`query "select domain from backup_domains where domain='$opt_domain_val';"`" ] && error "Service backup for domain $opt_domain_val already disabled"
 
-#registering new http service
-query "insert into backup_domains (domain) values ('$opt_domain_val');"
+#deleting entry in glabelle db
+query "delete from backup_domains where domain='$opt_domain_val';"
 
-#verif (pas de vérif a priori ..)
+#upgrading system level
+filename="glabelle.net`echo $DOMAIN_POOL_ROOT | sed -e 's/\//-/g'`-$opt_domain_val.*.tar.gz"
 
-sed -i "s:BM_TARBALL_DIRECTORIES=\":BM_TARBALL_DIRECTORIES=\"$DOMAIN_POOL_ROOT/$opt_domain_val :g" $BACKUP_CONFIG_FILE && exit 0
+ftp -in $BACKUP_FTP_SERVER <<EOF
+quote USER $BACKUP_FTP_LOGIN
+quote PASS $BACKUP_FTP_PASS
+
+binary
+mdelete $filename
+quit
+EOF
+
+sed -i "s:$DOMAIN_POOL_ROOT/$opt_domain_val ::g" $BACKUP_CONFIG_FILE && exit 0
 
 #otherwise, something went wrong.
-error "something unexpected appened"
-
+error "something unexpected appened, please call scriptmaster !"
