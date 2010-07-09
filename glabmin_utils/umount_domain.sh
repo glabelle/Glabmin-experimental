@@ -30,8 +30,7 @@ done
 #if version, display version and exit 
 [ -n "$opt_version" ] && echo "Version $(basename $0) $VERSION" && exit 0
 #if no domain or no password, then display help and exit
-[ -z "$opt_domain" ] && echo "Domain name is missing"
-
+[ -z "$opt_domain" ] && error "Domain name is missing"
 
 #argument vs system ckeckings :
 [ -n "`$DAEMON_DATABASE_SERVER status|grep 'MySQL is stopped'`" ] && echo "WARNING : trying start MySQL" && $DAEMON_DATABASE_SERVER start
@@ -60,8 +59,8 @@ fi
 #2) y'a t'il un pool de mail ? Si oui, on démonte sa racine
 [ -n "`query "select domain from mail_domains where domain='$opt_domain_val';"`" ] && echo "demontage des mails $opt_domain_val" && umount $MAIL_SYSTEM_POOL/$opt_domain_val && echo "done"
 #3) on démonte le domaine ..
-
-echo "demontage de domaine $opt_domain_val" && umount /dev$DOMAIN_POOL_ROOT/$opt_domain_val && echo "done" && exit 0
+#arret de Apache, demontage, reload de apache ..
+$DAEMON_HTTP_SERVER stop && echo "demontage de domaine $opt_domain_val" && umount /dev$DOMAIN_POOL_ROOT/$opt_domain_val && $DAEMON_HTTP_SERVER start && echo "done" && exit 0
 
 #otherwise, something went wrong.
 error "something unexpected appened"
