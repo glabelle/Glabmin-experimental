@@ -51,7 +51,7 @@ do
         sub_command=`echo $command | grep -o '"<.*>"'`
         sub_command=`echo $sub_command | sed 's#>"$##g'`
         sub_command=`echo $sub_command | sed 's#^"<##g'`
-	sub_command=`echo $sub_command | sed 's#&#\\\\&#g'`
+		sub_command=`echo $sub_command | sed 's#&#\\\\&#g'`
         echo $sub_command | sed -e 's:":\\\\":g'>tmp
         sub_command=`cat tmp`
         rm tmp
