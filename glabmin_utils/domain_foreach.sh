@@ -41,8 +41,9 @@ done
 #argument vs system ckeckings :
 [ -z "`query "select name from clients where name='$opt_name_val';"`" ] && error "Client $opt_name_val is unknown"
 
-#montages .. pas grand chose pour le moment ..
+TEMPFILE="/tmp/$(basename $0).tmp"
 
+#montages .. pas grand chose pour le moment ..
 for DOMAIN in `query "select name from domains where client='$opt_name_val';"`
 do
         command=$opt_command_val
@@ -52,9 +53,9 @@ do
         sub_command=`echo $sub_command | sed 's#>"$##g'`
         sub_command=`echo $sub_command | sed 's#^"<##g'`
 		sub_command=`echo $sub_command | sed 's#&#\\\\&#g'`
-        echo $sub_command | sed -e 's:":\\\\":g'>tmp
-        sub_command=`cat tmp`
-        rm tmp
+        echo $sub_command | sed -e 's:":\\\\":g'>$TEMPFILE
+        sub_command=`cat $TEMPFILE`
+        rm $TEMPFILE
         sub_command='"<'$sub_command'>"'
         command=`echo $command | sed 's#"<.*>"#SUBCOMMAND#g'`
         command=${command//\[DOMAIN\]/$DOMAIN}

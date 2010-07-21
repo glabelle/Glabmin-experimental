@@ -35,6 +35,8 @@ done
 #if no domain or no password, then display help and exit
 [ -z "$opt_command" ] && error "Command name is missing"
 
+TEMPFILE="/tmp/$(basename $0).tmp"
+
 #looping clients, replacing parameter & executing command ..
 for CLIENT in `query "select name from clients;"`
 do
@@ -47,9 +49,9 @@ do
         sub_command=`echo $sub_command | sed 's#>"$##g'`
         sub_command=`echo $sub_command | sed 's#^"<##g'`
         sub_command=`echo $sub_command | sed 's#&#\\\\&#g'`
-	echo $sub_command | sed -e 's:":\\\\":g'>tmp
-        sub_command=`cat tmp`
-        rm tmp
+	echo $sub_command | sed -e 's:":\\\\":g'>$TEMPFILE
+        sub_command=`cat $TEMPFILE`
+        rm $TEMPFILE
         sub_command='"<'$sub_command'>"'
         command=`echo $command | sed 's#"<.*>"#SUBCOMMAND#g'`
         command=${command//\[CLIENT\]/$CLIENT}
